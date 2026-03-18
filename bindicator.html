@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bindicator</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --green:      #2d6a4f;
+      --green-l:    #40916c;
+      --green-pale: #d8f3dc;
+      --grey:       #1b1b1b;
+      --grey-mid:   #555;
+      --grey-light: #f4f4f2;
+      --cream:      #fafaf8;
+      --brown:      #7B3F00;
+      --blue:       #1a3a5c;
+      --black-bin:  #2b2b2b;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--cream);
+      color: var(--grey);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        radial-gradient(circle at 20% 20%, rgba(45,106,79,0.06) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(26,58,92,0.05) 0%, transparent 50%);
+      pointer-events: none; z-index: 0;
+    }
+
+    .page {
+      position: relative; z-index: 1;
+      max-width: 680px; margin: 0 auto;
+      padding: 40px 20px 80px;
+    }
+
+    /* ── Header ── */
+    .header { text-align: center; margin-bottom: 48px; animation: fadeUp .6s ease both; }
+
+    .council-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--green); color: white;
+      padding: 6px 14px; border-radius: 20px;
+      font-size: 12px; font-weight: 600;
+      letter-spacing: .08em; text-transform: uppercase;
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: clamp(2.2rem, 5vw, 3rem);
+      line-height: 1.1; margin-bottom: 12px;
+    }
+    h1 em { font-style: normal; color: var(--green); }
+
+    .subtitle { color: var(--grey-mid); font-size: 16px; font-weight: 300; line-height: 1.5; }
+
+    /* ── Cards ── */
+    .card {
+      background: white; border-radius: 20px;
+      box-shadow: 0 4px 24px rgba(0,0,0,.07), 0 1px 4px rgba(0,0,0,.04);
+      padding: 32px; margin-bottom: 24px;
+      animation: fadeUp .6s .15s ease both;
+    }
+
+    .card-label {
+      font-size: 11px; font-weight: 600;
+      letter-spacing: .1em; text-transform: uppercase;
+      color: var(--grey-mid); margin-bottom: 16px;
+    }
+
+    /* ── Inputs ── */
+    .input-row { display: flex; gap: 10px; flex-wrap: wrap; }
+
+    input[type=text] {
+      flex: 1; min-width: 0;
+      border: 2px solid #e0e0dc; border-radius: 12px;
+      padding: 14px 18px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 18px; font-weight: 500;
+      color: var(--grey); background: var(--grey-light);
+      outline: none;
+      transition: border-color .2s, background .2s;
+      text-transform: uppercase; letter-spacing: .08em;
+    }
+    input[type=text]:focus { border-color: var(--green); background: white; }
+    input[type=text]::placeholder { text-transform: none; letter-spacing: 0; color: #aaa; font-weight: 300; }
+
+    select {
+      width: 100%;
+      border: 2px solid #e0e0dc; border-radius: 12px;
+      padding: 13px 16px;
+      font-family: 'DM Sans', sans-serif; font-size: 15px;
+      color: var(--grey); background: var(--grey-light);
+      outline: none; cursor: pointer;
+      transition: border-color .2s;
+      margin-bottom: 14px;
+    }
+    select:focus { border-color: var(--green); }
+
+    .btn {
+      background: var(--green); color: white;
+      border: none; border-radius: 12px;
+      padding: 14px 24px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px; font-weight: 600;
+      cursor: pointer; transition: background .2s, transform .1s;
+      white-space: nowrap;
+    }
+    .btn:hover { background: var(--green-l); }
+    .btn:active { transform: scale(.97); }
+    .btn:disabled { background: #aaa; cursor: not-allowed; }
+    .btn-full { width: 100%; }
+
+    /* ── Status ── */
+    .status { margin-top: 16px; font-size: 14px; min-height: 20px; color: var(--grey-mid); }
+    .status.err  { color: #c0392b; }
+    .status.info { color: var(--green); }
+
+    .spinner {
+      display: inline-block; width: 14px; height: 14px;
+      border: 2px solid #ddd; border-top-color: var(--green);
+      border-radius: 50%; animation: spin .7s linear infinite;
+      vertical-align: middle; margin-right: 6px;
+    }
+
+    /* ── Saved banner ── */
+    .saved-banner {
+      display: flex; align-items: center;
+      justify-content: space-between; gap: 12px;
+      background: var(--green-pale);
+      border: 1.5px solid rgba(45,106,79,.2);
+      border-radius: 14px; padding: 14px 18px;
+      margin-bottom: 20px;
+      animation: fadeUp .4s ease both;
+    }
+    .saved-banner-left { display: flex; align-items: center; gap: 10px; }
+    .saved-banner-icon { font-size: 20px; }
+    .saved-banner-text { font-size: 13px; color: var(--green); line-height: 1.3; }
+    .saved-banner-text strong { display: block; font-size: 15px; letter-spacing: .05em; }
+    .change-btn {
+      background: none; border: 1.5px solid var(--green);
+      color: var(--green); border-radius: 8px;
+      padding: 6px 12px; font-size: 12px; font-weight: 600;
+      cursor: pointer; font-family: 'DM Sans', sans-serif;
+      white-space: nowrap; transition: background .2s, color .2s;
+    }
+    .change-btn:hover { background: var(--green); color: white; }
+
+    /* ── Loading card ── */
+    .loading-inner { text-align: center; padding: 16px 0; }
+    .big-spinner {
+      width: 40px; height: 40px;
+      border: 3px solid #e0e0dc; border-top-color: var(--green);
+      border-radius: 50%; animation: spin .8s linear infinite;
+      margin: 0 auto 16px;
+    }
+    .loader-text { font-size: 15px; color: var(--grey-mid); }
+
+    /* ── Error ── */
+    .error-card {
+      background: #fff5f5; border: 1.5px solid #f5c6cb;
+      border-radius: 20px; padding: 24px 28px;
+      margin-bottom: 24px;
+    }
+    .error-title { font-family: 'DM Serif Display', serif; font-size: 1.2rem; color: #c0392b; margin-bottom: 8px; }
+    .error-body  { font-size: 14px; color: var(--grey-mid); line-height: 1.6; }
+    .error-body a { color: var(--green); }
+
+    /* ── Results ── */
+    .result-header {
+      display: flex; align-items: flex-start;
+      justify-content: space-between; flex-wrap: wrap;
+      gap: 8px; margin-bottom: 24px;
+    }
+    .result-title { font-family: 'DM Serif Display', serif; font-size: 1.4rem; }
+    .result-address { font-size: 14px; font-weight: 500; color: var(--grey); }
+    .result-sub { font-size: 12px; color: var(--grey-mid); margin-top: 2px; }
+    .tag {
+      padding: 4px 10px; border-radius: 20px;
+      font-size: 12px; font-weight: 600;
+    }
+    .tag.green { background: var(--green-pale); color: var(--green); }
+
+    /* ── Bin collection cards (v1 tile style) ── */
+    .bins-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 14px; margin-bottom: 24px;
+    }
+
+    .bin-card {
+      border-radius: 16px; padding: 20px 16px;
+      position: relative; overflow: hidden; cursor: default;
+    }
+    .bin-card::before {
+      content: '';
+      position: absolute; top: -20px; right: -20px;
+      width: 80px; height: 80px; border-radius: 50%;
+      background: rgba(255,255,255,.12);
+    }
+    .bin-card.green { background: var(--green); color: white; }
+    .bin-card.brown { background: var(--brown); color: white; }
+    .bin-card.blue  { background: var(--blue);  color: white; }
+    .bin-card.black { background: var(--black-bin); color: white; }
+
+    .bin-card-icon     { font-size: 26px; margin-bottom: 10px; }
+    .bin-card-type     { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; opacity: .75; margin-bottom: 4px; }
+    .bin-card-day      { font-family: 'DM Serif Display', serif; font-size: 1rem; line-height: 1.2; }
+    .bin-card-date     { font-size: 12px; opacity: .8; margin-top: 3px; }
+    .bin-card-soon     { display: inline-block; margin-top: 6px; background: rgba(255,255,255,.22); border-radius: 10px; font-size: 10px; font-weight: 700; padding: 2px 8px; letter-spacing: .04em; text-transform: uppercase; }
+    .bin-card-nodata   { font-size: 12px; opacity: .65; margin-top: 4px; font-style: italic; }
+
+    /* ── Info / rules strip ── */
+    .info-strip {
+      background: var(--grey-light); border-radius: 14px;
+      padding: 18px 20px; margin-bottom: 24px;
+    }
+    .info-strip h3 {
+      font-size: 13px; font-weight: 600;
+      letter-spacing: .06em; text-transform: uppercase;
+      color: var(--grey-mid); margin-bottom: 12px;
+    }
+    .info-item {
+      display: flex; align-items: flex-start; gap: 10px;
+      font-size: 14px; color: var(--grey); line-height: 1.4; margin-bottom: 8px;
+    }
+    .info-item:last-child { margin-bottom: 0; }
+    .info-item span:first-child { flex-shrink: 0; margin-top: 1px; }
+
+    .cta-link {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      background: var(--green); color: white;
+      text-decoration: none; border-radius: 14px;
+      padding: 16px 24px; font-weight: 600; font-size: 15px;
+      transition: background .2s, transform .1s;
+    }
+    .cta-link:hover { background: var(--green-l); transform: translateY(-1px); }
+
+    .reset-btn {
+      background: none; border: none; color: var(--grey-mid);
+      font-size: 13px; cursor: pointer; text-decoration: underline;
+      padding: 8px 0; font-family: 'DM Sans', sans-serif; margin-top: 12px;
+    }
+
+    /* ── Bin guide ── */
+    .bins-guide { margin-top: 32px; animation: fadeUp .6s .3s ease both; }
+    .guide-title {
+      font-size: 11px; font-weight: 600;
+      letter-spacing: .1em; text-transform: uppercase;
+      color: var(--grey-mid); margin-bottom: 16px;
+    }
+    .guide-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    @media(max-width:440px) { .guide-grid { grid-template-columns: 1fr; } }
+
+    .guide-item {
+      background: white; border-radius: 14px; padding: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.05);
+    }
+    .guide-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .guide-pip {
+      width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0;
+    }
+    .guide-pip.g  { background: var(--green); }
+    .guide-pip.br { background: var(--brown); }
+    .guide-pip.b  { background: var(--blue); }
+    .guide-pip.bk { background: var(--black-bin); }
+    .guide-name  { font-size: 13px; font-weight: 600; color: var(--grey); }
+    .guide-freq  { font-size: 11px; color: var(--grey-mid); margin-top: 1px; }
+    .guide-label { font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; margin-bottom: 4px; }
+    .guide-in, .guide-out { font-size: 12px; color: var(--grey-mid); line-height: 1.5; }
+
+    footer { text-align: center; margin-top: 48px; font-size: 12px; color: #aaa; line-height: 1.6; }
+    footer a { color: var(--green); text-decoration: none; }
+
+    @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes spin   { to{transform:rotate(360deg)} }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Header -->
+  <header class="header">
+    <div class="council-badge">♻️ Wigan Council</div>
+    <h1><em>Bindicator</em></h1>
+    <p class="subtitle">Your personalised bin collection schedule<br>for Wigan Borough.</p>
+  </header>
+
+  <!-- Saved address banner -->
+  <div id="savedBanner" style="display:none" class="saved-banner">
+    <div class="saved-banner-left">
+      <div class="saved-banner-icon">📍</div>
+      <div class="saved-banner-text">
+        Saved address
+        <strong id="savedPC"></strong>
+      </div>
+    </div>
+    <button class="change-btn" onclick="clearSaved()">Change</button>
+  </div>
+
+  <!-- Step 1: Postcode search -->
+  <div class="card" id="searchCard">
+    <div class="card-label">Step 1 — Enter your postcode</div>
+    <div class="input-row">
+      <input type="text" id="pcInput" placeholder="e.g. WN1 1PX" maxlength="8" autocomplete="off" />
+      <button class="btn" id="searchBtn" onclick="doSearch()">Find addresses →</button>
+    </div>
+    <div class="status" id="statusMsg"></div>
+  </div>
+
+  <!-- Step 2: Choose address -->
+  <div class="card" id="addressCard" style="display:none">
+    <div class="card-label">Step 2 — Select your address</div>
+    <select id="addressSelect">
+      <option value="">— Choose your address —</option>
+    </select>
+    <button class="btn btn-full" onclick="doSelectAddress()">View my bin dates →</button>
+  </div>
+
+  <!-- Loading -->
+  <div class="card" id="loadingCard" style="display:none">
+    <div class="loading-inner">
+      <div class="big-spinner"></div>
+      <div class="loader-text" id="loaderText">Fetching your bin schedule…</div>
+    </div>
+  </div>
+
+  <!-- Error -->
+  <div class="error-card" id="errorCard" style="display:none">
+    <div class="error-title" id="errorTitle">Something went wrong</div>
+    <div class="error-body"  id="errorBody"></div>
+  </div>
+
+  <!-- Results -->
+  <div class="card" id="resultsCard" style="display:none">
+    <div class="result-header">
+      <div>
+        <div class="result-title">Your next collections</div>
+        <div class="result-address" id="resultAddress">—</div>
+        <div class="result-sub"     id="resultSub">Wigan Borough</div>
+      </div>
+      <span class="tag green">Live data</span>
+    </div>
+
+    <!-- Coloured bin tile cards -->
+    <div class="bins-grid" id="binsGrid"></div>
+
+    <div class="info-strip">
+      <h3>📋 Collection rules</h3>
+      <div class="info-item"><span>⏰</span><span>Put your bin out <strong>by 6:30am</strong> on collection day (from 6pm the evening before).</span></div>
+      <div class="info-item"><span>🔢</span><span>Mark your bin with your <strong>house number</strong>.</span></div>
+      <div class="info-item"><span>🚫</span><span>Lid must be <strong>fully closed</strong> — no side waste or overfilling.</span></div>
+      <div class="info-item"><span>🏠</span><span>Retrieve your bin by <strong>midnight</strong> on collection day.</span></div>
+    </div>
+
+    <a id="councilLink" class="cta-link" href="#" target="_blank" rel="noopener">
+      📅 Full calendar on Wigan Council →
+    </a>
+    <div style="text-align:center">
+      <button class="reset-btn" onclick="clearSaved()">← Change address</button>
+    </div>
+  </div>
+
+  <!-- Bin guide -->
+  <div class="bins-guide">
+    <div class="guide-title">Which bin is which?</div>
+    <div class="guide-grid">
+      <div class="guide-item">
+        <div class="guide-header">
+          <div class="guide-pip g"></div>
+          <div><div class="guide-name">Green Bin</div><div class="guide-freq">Fortnightly</div></div>
+        </div>
+        <div class="guide-label" style="color:var(--green)">✓ Accepted</div>
+        <div class="guide-in">Grass, leaves, twigs, small branches, bread, egg shells, dairy, meat, fish, fruit, veg, teabags, leftover food. No bag needed.</div>
+        <div class="guide-label" style="color:#888;margin-top:6px">✗ Not accepted</div>
+        <div class="guide-out">Cardboard, soil, rubble, large branches, plastic bags, liquid oils/fat, dog foul, cat litter</div>
+      </div>
+      <div class="guide-item">
+        <div class="guide-header">
+          <div class="guide-pip br"></div>
+          <div><div class="guide-name">Brown Bin</div><div class="guide-freq">3-weekly</div></div>
+        </div>
+        <div class="guide-label" style="color:var(--green)">✓ Accepted</div>
+        <div class="guide-in">Cans, tins, aerosols, glass bottles &amp; jars, plastic bottles, yoghurt pots, plastic pots &amp; tubs, aluminium foil</div>
+        <div class="guide-label" style="color:#888;margin-top:6px">✗ Not accepted</div>
+        <div class="guide-out">Plastic bags/film, food, nappies, electrical items, hosepipes, wine glasses, window glass, Tetra Pak, coffee pods</div>
+      </div>
+      <div class="guide-item">
+        <div class="guide-header">
+          <div class="guide-pip b"></div>
+          <div><div class="guide-name">Blue Bin / White Sack</div><div class="guide-freq">3-weekly</div></div>
+        </div>
+        <div class="guide-label" style="color:var(--green)">✓ Accepted</div>
+        <div class="guide-in">Office paper, junk mail, catalogues, newspapers, magazines, envelopes, greeting cards (no glitter), cardboard, toilet/kitchen roll tubes</div>
+        <div class="guide-label" style="color:#888;margin-top:6px">✗ Not accepted</div>
+        <div class="guide-out">Nappies, food, plastic bags/wrappers/trays, polystyrene, books, crisp packets, Tetra Pak, wallpaper</div>
+      </div>
+      <div class="guide-item">
+        <div class="guide-header">
+          <div class="guide-pip bk"></div>
+          <div><div class="guide-name">Black Bin</div><div class="guide-freq">3-weekly</div></div>
+        </div>
+        <div class="guide-label" style="color:var(--green)">✓ Accepted</div>
+        <div class="guide-in">Anything not recyclable elsewhere — nappies, incontinence pads, dog foul, cat litter</div>
+        <div class="guide-label" style="color:#888;margin-top:6px">✗ Not accepted</div>
+        <div class="guide-out">Soil, rubble, building materials, liquid waste (paints/oils), hazardous waste, batteries, electrical items</div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    Data sourced live from <a href="https://apps.wigan.gov.uk/myneighbourhood/" target="_blank">Wigan Council My Neighbourhood</a>.<br>
+    Bin contents from <a href="https://www.wigan.gov.uk/Resident/Bins-Recycling/Which-bin-do-I-use.aspx" target="_blank">wigan.gov.uk</a>. Unofficial helper — always verify on the council website.
+  </footer>
+
+</div>
+<script>
+  const STORAGE_KEY = 'wiganBinData_v2';
+
+  // Correct bin config per Wigan Council's own website
+  const BIN_META = {
+    GREEN: { label: 'Green Bin',          color: 'green', icon: '🌿', contents: 'Food & garden waste — fortnightly' },
+    BROWN: { label: 'Brown Bin',          color: 'brown', icon: '♻️', contents: 'Cans, glass, plastic bottles & tubs — 3-weekly' },
+    BLUE:  { label: 'Blue Bin',           color: 'blue',  icon: '📰', contents: 'Paper & cardboard only — 3-weekly' },
+    BLACK: { label: 'Black Bin',          color: 'black', icon: '🗑️', contents: 'General household waste — 3-weekly' },
+  };
+
+  let currentPostcode = '';
+  let pendingAddresses = [];
+
+  const searchCard  = document.getElementById('searchCard');
+  const addressCard = document.getElementById('addressCard');
+  const loadingCard = document.getElementById('loadingCard');
+  const resultsCard = document.getElementById('resultsCard');
+  const errorCard   = document.getElementById('errorCard');
+  const savedBanner = document.getElementById('savedBanner');
+  const pcInput     = document.getElementById('pcInput');
+  const statusMsg   = document.getElementById('statusMsg');
+
+  pcInput.addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
+
+  window.addEventListener('DOMContentLoaded', () => {
+    [searchCard, addressCard, loadingCard, resultsCard, errorCard].forEach(e => e.style.display = 'none');
+    const saved = getSaved();
+    if (saved) { showSavedBanner(saved.address || saved.postcode); renderResults(saved); }
+    else { searchCard.style.display = 'block'; }
+  });
+
+  // ── Persist ──────────────────────────────────────────────────
+  function getSaved()     { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch { return null; } }
+  function setSaved(data) { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch {} }
+
+  function clearSaved() {
+    localStorage.removeItem(STORAGE_KEY);
+    savedBanner.style.display = 'none';
+    [resultsCard, errorCard, addressCard, loadingCard].forEach(e => e.style.display = 'none');
+    searchCard.style.display = 'block';
+    pcInput.value = ''; setStatus(''); pcInput.focus();
+  }
+
+  function setStatus(msg, type = '') { statusMsg.className = 'status ' + type; statusMsg.innerHTML = msg; }
+  function showSavedBanner(label)    { document.getElementById('savedPC').textContent = label; savedBanner.style.display = 'flex'; }
+
+  function showError(title, body) {
+    loadingCard.style.display = 'none';
+    document.getElementById('errorTitle').textContent = title;
+    document.getElementById('errorBody').innerHTML    = body;
+    errorCard.style.display = 'block';
+  }
+
+  function setLoader(text) {
+    [searchCard, addressCard, resultsCard, errorCard].forEach(e => e.style.display = 'none');
+    document.getElementById('loaderText').textContent = text;
+    loadingCard.style.display = 'block';
+  }
+
+  // ── Step 1: postcode → address list ─────────────────────────
+  async function doSearch() {
+    const raw = pcInput.value.trim();
+    if (!raw) { setStatus('Please enter a postcode.', 'err'); return; }
+    const pc = raw.toUpperCase().replace(/\s+/g, ' ').trim();
+    currentPostcode = pc;
+    document.getElementById('searchBtn').disabled = true;
+    setStatus('<span class="spinner"></span> Validating postcode…', 'info');
+
+    try {
+      const res  = await fetch(`https://api.postcodes.io/postcodes/${encodeURIComponent(pc)}`);
+      const data = await res.json();
+      if (data.status !== 200) {
+        setStatus('❌ Postcode not found. Please check and try again.', 'err');
+        document.getElementById('searchBtn').disabled = false; return;
+      }
+      if (!(data.result.admin_district||'').toLowerCase().includes('wigan')) {
+        setStatus(`⚠️ That postcode is in <strong>${data.result.admin_district||'another area'}</strong> — not Wigan Borough.`, 'err');
+        document.getElementById('searchBtn').disabled = false; return;
+      }
+
+      setStatus('<span class="spinner"></span> Looking up addresses…', 'info');
+      const addresses = await fetchAddressesViaAI(pc);
+      document.getElementById('searchBtn').disabled = false;
+
+      if (!addresses || addresses.length === 0) {
+        setStatus('❌ No addresses found for this postcode. Please check and try again.', 'err'); return;
+      }
+      if (addresses.length === 1) {
+        setStatus(''); searchCard.style.display = 'none';
+        await loadScheduleForAddress(addresses[0]); return;
+      }
+      pendingAddresses = addresses;
+      document.getElementById('addressSelect').innerHTML =
+        '<option value="">— Choose your address —</option>' +
+        addresses.map((a, i) => `<option value="${i}">${a.address}</option>`).join('');
+      setStatus(''); searchCard.style.display = 'none'; addressCard.style.display = 'block';
+    } catch (err) {
+      console.error(err);
+      setStatus('❌ Network error. Please try again.', 'err');
+      document.getElementById('searchBtn').disabled = false;
+    }
+  }
+
+  // ── Step 2: select address ───────────────────────────────────
+  async function doSelectAddress() {
+    const idx = document.getElementById('addressSelect').value;
+    if (idx === '') return;
+    addressCard.style.display = 'none';
+    await loadScheduleForAddress(pendingAddresses[parseInt(idx)]);
+  }
+
+  async function loadScheduleForAddress(addressObj) {
+    setLoader('Fetching your bin schedule…');
+    try {
+      const schedule = await fetchScheduleViaAI(addressObj.uprn, currentPostcode, addressObj.address);
+      if (!schedule || !schedule.collections || schedule.collections.length === 0) {
+        loadingCard.style.display = 'none';
+        showError('No schedule found',
+          `We couldn't retrieve a bin schedule for <strong>${addressObj.address}</strong>. ` +
+          `Try <a href="https://apps.wigan.gov.uk/myneighbourhood/?postcode=${encodeURIComponent(currentPostcode)}" target="_blank">Wigan Council's website</a> directly.`);
+        searchCard.style.display = 'block'; return;
+      }
+      const dataToSave = {
+        postcode: currentPostcode, address: addressObj.address,
+        uprn: addressObj.uprn, schedule, fetchedAt: new Date().toISOString()
+      };
+      setSaved(dataToSave);
+      showSavedBanner(addressObj.address);
+      loadingCard.style.display = 'none';
+      renderResults(dataToSave);
+    } catch (err) {
+      console.error(err); loadingCard.style.display = 'none';
+      showError('Could not load schedule',
+        `There was a problem fetching data. Please try again, or ` +
+        `<a href="https://apps.wigan.gov.uk/myneighbourhood/?postcode=${encodeURIComponent(currentPostcode)}" target="_blank">check the council website</a>.`);
+      searchCard.style.display = 'block';
+    }
+  }
+
+  // ── Claude API calls ─────────────────────────────────────────
+  async function fetchAddressesViaAI(postcode) {
+    const prompt = `Fetch the address list for postcode "${postcode}" from Wigan Council's My Neighbourhood site.
+
+Request this URL: https://apps.wigan.gov.uk/myneighbourhood/BinSearch.aspx?postcode=${encodeURIComponent(postcode)}
+
+Find the address dropdown in the HTML (a <select> element). Each <option> has a UPRN as its value and an address as its display text. Extract all options except any blank/placeholder ones.
+
+Return ONLY a raw JSON array, no markdown, no explanation:
+[{"uprn":"100012345678","address":"1 Example Street, Wigan, WN1 1AA"}]
+
+If no addresses found, return: []`;
+
+    const resp = await callClaude(prompt);
+    try {
+      const match = resp.replace(/```json|```/gi, '').trim().match(/\[[\s\S]*\]/);
+      return match ? JSON.parse(match[0]) : [];
+    } catch { return []; }
+  }
+
+  async function fetchScheduleViaAI(uprn, postcode, address) {
+    const prompt = `Fetch the bin collection schedule for this Wigan Council property:
+UPRN: ${uprn}
+Address: ${address}
+Today: ${new Date().toISOString().split('T')[0]}
+
+Try fetching: https://apps.wigan.gov.uk/myneighbourhood/BinSearch.aspx?uprn=${uprn}
+
+Find the bin collection calendar in the HTML. Extract the next upcoming collection date for each bin type.
+Bin types: GREEN (food/garden waste, fortnightly), BROWN (mixed recycling — cans/glass/plastic, 3-weekly), BLUE (paper & card only, 3-weekly), BLACK (general household waste, 3-weekly).
+
+Return ONLY raw JSON, no markdown:
+{"collections":[{"bin":"GREEN","date":"YYYY-MM-DD","dayName":"Monday"},{"bin":"BROWN","date":"YYYY-MM-DD","dayName":"Tuesday"},{"bin":"BLUE","date":"YYYY-MM-DD","dayName":"Wednesday"},{"bin":"BLACK","date":"YYYY-MM-DD","dayName":"Thursday"}],"collectionDay":"Monday"}
+
+Only include bins with a confirmed future date. If no data found: {"collections":[]}`;
+
+    const resp = await callClaude(prompt);
+    try {
+      const match = resp.replace(/```json|```/gi, '').trim().match(/\{[\s\S]*\}/);
+      return match ? JSON.parse(match[0]) : { collections: [] };
+    } catch { return { collections: [] }; }
+  }
+
+  async function callClaude(prompt) {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    const data = await res.json();
+    return (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('\n');
+  }
+
+  // ── Render results using v1 tile cards ───────────────────────
+  function renderResults(saved) {
+    [searchCard, addressCard, loadingCard, errorCard].forEach(e => e.style.display = 'none');
+    document.getElementById('resultAddress').textContent = saved.address || saved.postcode;
+    document.getElementById('resultSub').textContent     = `${saved.postcode} · Wigan Borough`;
+
+    const uprn = saved.uprn || '';
+    document.getElementById('councilLink').href = uprn
+      ? `https://apps.wigan.gov.uk/myneighbourhood/BinSearch.aspx?uprn=${uprn}`
+      : `https://apps.wigan.gov.uk/myneighbourhood/?postcode=${encodeURIComponent(saved.postcode)}`;
+
+    const grid        = document.getElementById('binsGrid');
+    const collections = (saved.schedule && saved.schedule.collections) || [];
+    const today       = new Date(); today.setHours(0, 0, 0, 0);
+
+    if (collections.length === 0) {
+      grid.innerHTML = `<div style="color:var(--grey-mid);font-size:14px;padding:8px 0;grid-column:1/-1">
+        No collection data available. <a href="${document.getElementById('councilLink').href}" target="_blank" style="color:var(--green)">Check the council website →</a>
+      </div>`;
+    } else {
+      // Show all 4 bins in the fixed order, even if some have no date
+      const ORDER = ['GREEN', 'BROWN', 'BLUE', 'BLACK'];
+      const byBin = {};
+      collections.forEach(c => { byBin[c.bin.toUpperCase()] = c; });
+
+      grid.innerHTML = ORDER.map(key => {
+        const meta = BIN_META[key];
+        const c    = byBin[key];
+        if (!c) {
+          // Bin present but no date returned
+          return `<div class="bin-card ${meta.color}">
+            <div class="bin-card-icon">${meta.icon}</div>
+            <div class="bin-card-type">${meta.label}</div>
+            <div class="bin-card-nodata">No date found</div>
+          </div>`;
+        }
+        const d     = new Date(c.date + 'T00:00:00');
+        const diff  = Math.round((d - today) / 86400000);
+        const day   = c.dayName || d.toLocaleDateString('en-GB', { weekday: 'long' });
+        const date  = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+        const soon  = diff === 0 ? 'Today!'
+                    : diff === 1 ? 'Tomorrow!'
+                    : diff <= 7  ? `In ${diff} days`
+                    : '';
+        return `<div class="bin-card ${meta.color}">
+          <div class="bin-card-icon">${meta.icon}</div>
+          <div class="bin-card-type">${meta.label}</div>
+          <div class="bin-card-day">${day}</div>
+          <div class="bin-card-date">${date}</div>
+          ${soon ? `<div class="bin-card-soon">${soon}</div>` : ''}
+        </div>`;
+      }).join('');
+    }
+
+    // Stale data note
+    if (saved.fetchedAt) {
+      const ageH = Math.round((Date.now() - new Date(saved.fetchedAt)) / 3600000);
+      if (ageH > 12) {
+        const note = document.createElement('div');
+        note.style.cssText = 'font-size:11px;color:var(--grey-mid);text-align:center;margin-top:8px;grid-column:1/-1';
+        note.innerHTML = `Data cached ${ageH}h ago. <button onclick="refreshSchedule()" style="background:none;border:none;color:var(--green);font-size:11px;cursor:pointer;text-decoration:underline;font-family:inherit">Refresh →</button>`;
+        grid.appendChild(note);
+      }
+    }
+
+    resultsCard.style.display = 'block';
+  }
+
+  async function refreshSchedule() {
+    const saved = getSaved();
+    if (!saved) { clearSaved(); return; }
+    currentPostcode = saved.postcode;
+    resultsCard.style.display = 'none';
+    await loadScheduleForAddress({ uprn: saved.uprn, address: saved.address });
+  }
+</script>
+</body>
+</html>
